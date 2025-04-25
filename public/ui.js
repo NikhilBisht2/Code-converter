@@ -91,13 +91,6 @@ async function convertCode() {
     }
 }
 
-// Copy output code to clipboard
-function copyOutput() {
-    const output = document.getElementById("output");
-    navigator.clipboard.writeText(output.value)
-        .then(() => alert("Code copied!"))
-        .catch(() => alert("Failed to copy."));
-}
 
 // Allow tab indentation in textareas
 document.querySelectorAll("textarea").forEach(area => {
