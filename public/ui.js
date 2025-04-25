@@ -1,28 +1,15 @@
-// Update line numbers for input box
-function updateInputLineNumbers() {
-    const input = document.getElementById("input");
-    const lineNumbers = document.getElementById("lineNumbers");
-    const lines = input.value.split("\n").length;
-
-    lineNumbers.innerHTML = "";
+function updateLineNumbers(textarea, lineNumberElement) {
+    const lines = textarea.value.split("\n").length;
+    const fragment = document.createDocumentFragment();
     for (let i = 1; i <= lines; i++) {
-        lineNumbers.innerHTML += i + "<br>";
+        const lineNumber = document.createElement("div");
+        lineNumber.textContent = i;
+        fragment.appendChild(lineNumber);
     }
+    lineNumberElement.innerHTML = "";
+    lineNumberElement.appendChild(fragment);
 }
 
-// Update line numbers for output box
-function updateOutputLineNumbers() {
-    const output = document.getElementById("output");
-    const lineNumbersOutput = document.getElementById("lineNumbersOutput");
-    const lines = output.value.split("\n").length;
-
-    lineNumbersOutput.innerHTML = "";
-    for (let i = 1; i <= lines; i++) {
-        lineNumbersOutput.innerHTML += i + "<br>";
-    }
-}
-
-// Sync scrolling between textarea and line number column
 function syncScroll(element) {
     const input = document.getElementById("input");
     const output = document.getElementById("output");
@@ -36,14 +23,16 @@ function syncScroll(element) {
     }
 }
 
-// Detect source language based on content
 function detectSourceLanguage(code) {
-    if (code.includes("printf") || code.includes("#include")) return "C";
-    if (code.includes("print(") || code.includes("def ")) return "Python";
+    if (code.includes("printf") || code.includes("#include")) {
+        return "C";
+    }
+    if (code.includes("print(") || code.includes("def ")) {
+        return "Python";
+    }
     return "Unknown";
 }
 
-// Convert code using the backend API
 async function convertCode() {
     const input = document.getElementById("input").value;
     if (!input.trim()) {
@@ -57,7 +46,6 @@ async function convertCode() {
     const sourceLanguage = detectSourceLanguage(input);
     
     try {
-        // Disable button and show loading state
         convertButton.disabled = true;
         convertButton.textContent = "Converting...";
         outputTextarea.value = "Processing...";
@@ -80,19 +68,16 @@ async function convertCode() {
         
         const data = await response.json();
         outputTextarea.value = data.convertedCode;
-        updateOutputLineNumbers();
+        updateLineNumbers(outputTextarea, document.getElementById("lineNumbersOutput"));
     } catch (error) {
         console.error('Error:', error);
         outputTextarea.value = "Error converting code. Please try again.";
     } finally {
-        // Re-enable button
         convertButton.disabled = false;
         convertButton.textContent = "Convert";
     }
 }
 
-
-// Allow tab indentation in textareas
 document.querySelectorAll("textarea").forEach(area => {
     area.addEventListener("keydown", e => {
         if (e.key === "Tab") {
@@ -105,14 +90,23 @@ document.querySelectorAll("textarea").forEach(area => {
     });
 });
 
-// Hook events
 document.addEventListener("DOMContentLoaded", () => {
-    updateInputLineNumbers();
-    updateOutputLineNumbers();
+    const inputTextarea = document.getElementById("input");
+    const outputTextarea = document.getElementById("output");
+    updateLineNumbers(inputTextarea, document.getElementById("lineNumbers"));
+    updateLineNumbers(outputTextarea, document.getElementById("lineNumbersOutput"));
     
     document.getElementById("convert").addEventListener("click", convertCode);
     document.getElementById("copyBtn").addEventListener("click", copyOutput);
 });
+
+document.getElementById("input").addEventListener("input", function() {
+    updateLineNumbers(this, document.getElementById("lineNumbers"));
+});
+document.getElementById("output").addEventListener("input", function() {
+    updateLineNumbers(this, document.getElementById("lineNumbersOutput"));
+});
+
 
 document.getElementById("input").addEventListener("input", updateInputLineNumbers);
 document.getElementById("output").addEventListener("input", updateOutputLineNumbers);
