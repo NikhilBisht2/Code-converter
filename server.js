@@ -1,12 +1,26 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const bodyParser = require('body-parser');
+const winston = require('winston'); 
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const logger = winston.createLogger({
+    level: 'info',
+    transports: [
+        new winston.transports.Console({ format: winston.format.simple() }),
+        new winston.transports.File({ filename: 'error.log', level: 'error' })
+    ]
+});
+
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
@@ -26,7 +40,7 @@ app.post('/convert', async (req, res) => {
         }
 
         const sourceLanguage = targetLanguage === 'Python' ? 'C' : 'Python';
-        const model = 'llama2:7b';
+        const model = process.env.MODEL_NAME || 'llama2:7b'; 
 
         const strictPrompt = `
 Convert the following ${sourceLanguage} code to equivalent ${targetLanguage} code.
@@ -80,14 +94,15 @@ ${wrapCodeIfNeeded(code, sourceLanguage)}
         res.json({ convertedCode: finalCode });
 
     } catch (error) {
-        console.error('Error:', error.message || error);
+        logger.error('Error:', error.message || error);
         res.status(500).json({ error: 'Failed to convert code. Please try again later.' });
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    logger.info(`Server running on http://localhost:${PORT}`);
 });
+
 
 
 
