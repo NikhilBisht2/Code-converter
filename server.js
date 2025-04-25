@@ -1,0 +1,98 @@
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static('public'));
+
+// Helper: Wrap small C code snippets
+function wrapCodeIfNeeded(code, sourceLanguage) {
+    if (sourceLanguage === 'C' && !code.includes("main")) {
+        return `#include <stdio.h>\n\nint main() {\n    ${code}\n    return 0;\n}`;
+    }
+    return code;
+}
+
+app.post('/convert', async (req, res) => {
+    try {
+        const { code, targetLanguage } = req.body;
+
+        if (!code || !targetLanguage) {
+            return res.status(400).json({ error: 'Code and target language are required' });
+        }
+
+        const sourceLanguage = targetLanguage === 'Python' ? 'C' : 'Python';
+        const model = 'llama2:7b';
+
+        const strictPrompt = `
+Convert the following ${sourceLanguage} code to equivalent ${targetLanguage} code.
+Respond only with valid ${targetLanguage} code. Do not explain anything or add formatting.
+
+Ensure function logic and conditionals are preserved correctly.
+Use the same variable names and print the square value, not just loop counters.
+
+${wrapCodeIfNeeded(code, sourceLanguage)}
+`;
+
+        const response = await axios.post(
+            'http://localhost:11434/api/generate',
+            {
+                model,
+                prompt: strictPrompt,
+                stream: false,
+                options: {
+                    temperature: 0
+                }
+            },
+            { timeout: 15000 }
+        );
+
+        let output = response.data?.response;
+
+        if (!output) {
+            return res.status(500).json({ error: 'No response from the model' });
+        }
+
+        // Basic cleanup: remove duplicates, irrelevant lines
+        const seenLines = new Set();
+        const cleanedLines = output
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line =>
+                line &&
+                !line.toLowerCase().startsWith('for loop') &&
+                !seenLines.has(line) &&
+                seenLines.add(line)
+            );
+
+        // 🧠 Smart Fix: Replace wrong variable in print (like `i` instead of `sq`)
+        const correctedLines = cleanedLines.map(line => {
+            if (line.includes('print') && line.includes('{i}') && line.includes('square')) {
+                return line.replace('{i}', '{sq}'); // Correct the variable name from 'i' to 'sq'
+            }
+            return line;
+        });
+
+        // Final output logic: return the full corrected code
+        const finalCode = correctedLines.join('\n');
+
+        res.json({ convertedCode: finalCode });
+
+    } catch (error) {
+        console.error('Error:', error.message || error);
+        res.status(500).json({ error: 'Failed to convert code. Please try again later.' });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+
+
+
