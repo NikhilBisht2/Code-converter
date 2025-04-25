@@ -10,7 +10,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Helper: Wrap small C code snippets
 function wrapCodeIfNeeded(code, sourceLanguage) {
     if (sourceLanguage === 'C' && !code.includes("main")) {
         return `#include <stdio.h>\n\nint main() {\n    ${code}\n    return 0;\n}`;
@@ -58,7 +57,6 @@ ${wrapCodeIfNeeded(code, sourceLanguage)}
             return res.status(500).json({ error: 'No response from the model' });
         }
 
-        // Basic cleanup: remove duplicates, irrelevant lines
         const seenLines = new Set();
         const cleanedLines = output
             .split('\n')
@@ -70,15 +68,13 @@ ${wrapCodeIfNeeded(code, sourceLanguage)}
                 seenLines.add(line)
             );
 
-        // 🧠 Smart Fix: Replace wrong variable in print (like `i` instead of `sq`)
         const correctedLines = cleanedLines.map(line => {
             if (line.includes('print') && line.includes('{i}') && line.includes('square')) {
-                return line.replace('{i}', '{sq}'); // Correct the variable name from 'i' to 'sq'
+                return line.replace('{i}', '{sq}'); 
             }
             return line;
         });
 
-        // Final output logic: return the full corrected code
         const finalCode = correctedLines.join('\n');
 
         res.json({ convertedCode: finalCode });
