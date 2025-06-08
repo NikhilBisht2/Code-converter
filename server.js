@@ -5,24 +5,15 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: '*', 
-    methods: ['GET', 'POST'],
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'], 
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(bodyParser.json());
-
-app.use(express.static('public')); 
-
-function wrapCodeIfNeeded(code, sourceLanguage) {
-    if (sourceLanguage === 'C' && !code.includes("main")) {
-        return `#include <stdio.h>\n\nint main() {\n    ${code}\n    return 0;}\n`;
-    }
-    return code;
-}
 
 app.post('/convert', async (req, res) => {
     try {
@@ -51,7 +42,7 @@ ${wrapCodeIfNeeded(code, sourceLanguage)}
         const response = await axios.post(
             'https://openrouter.ai/api/v1/chat/completions',
             {
-                model: 'deepseek/deepseek-r1-0528-qwen3-8b:free', 
+                model: 'deepseek/deepseek-r1-0528-qwen3-8b:free',
                 messages: [
                     { role: 'system', content: 'You are a code converter that strictly translates C ↔ Python.' },
                     { role: 'user', content: strictPrompt }
@@ -98,7 +89,16 @@ ${wrapCodeIfNeeded(code, sourceLanguage)}
     }
 });
 
+function wrapCodeIfNeeded(code, sourceLanguage) {
+    if (sourceLanguage === 'C' && !code.includes("main")) {
+        return `#include <stdio.h>\n\nint main() {\n    ${code}\n    return 0;}\n`;
+    }
+    return code;
+}
+
+app.use(express.static('public'));
+
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
     console.log(`Static files served from 'public' directory.`);
 });
