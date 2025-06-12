@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Code Converter</title>
+    <link rel="stylesheet" href="ui.css">
+</head>
+<body>
+    <div class="heading">Code Converter</div>
+
+    <div class="container">
+        <!-- Input Editor -->
+        <div class="input-container">
+            <div class="editor">
+                <div class="line-numbers" id="lineNumbers"></div>
+                <textarea id="input" placeholder="Enter your code here..." oninput="updateInputLineNumbers()" onscroll="syncScroll(this)"></textarea>
+            </div>
+        </div>
+
+        <!-- Output Editor -->
+        <div class="output-container">
+            <div class="editor">
+                <div class="line-numbers" id="lineNumbersOutput"></div>
+                <textarea id="output" placeholder="Converted code will appear here..." readonly onscroll="syncScroll(this)"></textarea>
+            </div>
+        </div>
+
+        <!-- Language Selection -->
+        <select name="langs" id="langs" class="options">
+            <option value="Python">Python</option>
+            <option value="C">C</option>
+        </select>
+    </div>
+
+    <div class="actions">
+        <button id="convert" class="convert">Convert</button>
+    </div>
+
+    <script src="ui.js"></script>
+</body>
+</html>
+
+
