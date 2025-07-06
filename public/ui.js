@@ -50,7 +50,7 @@
             convertButton.textContent = "Converting...";
             outputTextarea.value = "Processing...";
 
-            const response = await fetch('https://code-converter-1qk2.onrender.com/convert', {
+            const response = await fetch('http://localhost:3000/convert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
