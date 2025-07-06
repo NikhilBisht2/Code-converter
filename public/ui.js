@@ -50,7 +50,7 @@
             convertButton.textContent = "Converting...";
             outputTextarea.value = "Processing...";
 
-            const response = await fetch('http://localhost:3000/convert', {
+            const response = await fetch('https://code-converter-t6vt.onrender.com/convert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
